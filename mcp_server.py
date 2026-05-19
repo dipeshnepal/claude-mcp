@@ -3,6 +3,7 @@
 
 from pydantic import Field
 from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp.prompts import base
 
 mcp = FastMCP("DocumentMCP", log_level="ERROR")
 
@@ -67,9 +68,37 @@ def get_document_contents(doc_id: str) -> str:
         raise ValueError(f"Document with id {doc_id} not found")
     return docs[doc_id]
 
-# TODO: Write a prompt to rewrite a doc in markdown format
-# TODO: Write a prompt to summarize a doc
 
+@mcp.prompt(
+    name="markdown_doc",
+    description="Return a markdown summary of the document with the given id",
+)
+def format_doc_as_markdown(doc_id: str) -> list[base.Message]:
+    if doc_id not in docs:
+        raise ValueError(f"Document with id {doc_id} not found")
+    
+    prompt = f"""Your task is to read the contents of the document with id {doc_id} "
+        " and return a markdown summary of the document. "
+        " The ID of the document is {doc_id}. """ \
+
+    #contents = docs[doc_id]
+    #markdown_contents = f"# Document: {doc_id}\n\n{contents}"
+    return [base.UserMessage(prompt)]
+
+@mcp.prompt(    
+    name="summarize_doc",
+    description="Summarize the document with the given id and return the summary",
+)
+
+def summarize_doc(doc_id: str) -> str:
+    if doc_id not in docs:
+        raise ValueError(f"Document with id {doc_id} not found")
+    
+    prompt = f"""Your task is to read the contents of the document with id {doc_id} "
+        " and summarize it. "
+        " The ID of the document is {doc_id}. """ \
+        
+    return [base.UserMessage(prompt)]
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")
